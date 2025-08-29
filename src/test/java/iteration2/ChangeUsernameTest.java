@@ -1,138 +1,63 @@
 package iteration2;
 
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
-import io.restassured.http.ContentType;
-import org.apache.http.HttpStatus;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeAll;
+import Generators.RandomData;
+import Models.ChangeUserNameRequest;
+import Models.ChangeUsernameResponse;
+import Models.CreateUserRequest;
+import Models.ViewProfileResponse;
+import Requests.ChangeUsernameRequester;
+import Requests.ViewProfileRequester;
+import Specs.RequestSpecifications;
+import Specs.ResponseSpecifications;
+import iteration2.Steps.CreateUserSteps;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.List;
 import java.util.stream.Stream;
 
-import static io.restassured.RestAssured.given;
+public class ChangeUsernameTest extends BaseTest {
 
-public class ChangeUsernameTest {
-    @BeforeAll
-    public static void setupRestAssured() {
-        RestAssured.filters(
-                List.of(new RequestLoggingFilter(),
-                        new ResponseLoggingFilter())
-        );
+    private String generatedUsername;
+    private String generatedPassword;
+
+    @BeforeEach
+    public void setUp() {
+        CreateUserRequest user = CreateUserSteps.createUser();
+        this.generatedUsername = user.getUsername();
+        this.generatedPassword = user.getPassword();
     }
 
 
     @Test
-    @DisplayName("Admin Authorization to get Basic Auth")
-    public void adminCanGenerateAuthTokenTest() {
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .body("""
-                        {
-                          "username": "admin",
-                          "password": "admin"
-                        }
-                        """)
-                .post("http://localhost:4111/api/v1/auth/login")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .header("Authorization", "Basic YWRtaW46YWRtaW4=");
-    }
+    @DisplayName("User can change his name for two words")
+    public void userCanChangeHisNameTest() {
 
+        ViewProfileResponse initialProfile = new ViewProfileRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+                .get().extract().as(ViewProfileResponse.class);
 
-    @Test
-    @DisplayName("Admin creates a new user and the user authorization")
-    public void adminCreatesNewUserTestAndUserAuthTest() {
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", "Basic YWRtaW46YWRtaW4=")
-                .body("""
-                        {
-                          "username": "User123",
-                          "password": "User123$",
-                          "role": "USER"
-                        }
-                        """)
-                .post("http://localhost:4111/api/v1/admin/users")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_CREATED);
+        softly.assertThat(initialProfile.getName()).isEqualTo(null);
 
+        ChangeUserNameRequest newNameRequest = ChangeUserNameRequest.builder().name(RandomData.getNewUsername()).build();
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .body("""
-                        {
-                          "username": "User123",
-                          "password": "User123$"
-                        }
-                        """)
-                .post("http://localhost:4111/api/v1/auth/login")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK);
+        ChangeUsernameResponse changeUsernameResponse = new ChangeUsernameRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword),
+                ResponseSpecifications.statusOk())
+                .put(newNameRequest).extract().as(ChangeUsernameResponse.class);
+
+        softly.assertThat(newNameRequest.getName()).isEqualTo(changeUsernameResponse.getCustomer().getName());
+
+        ViewProfileResponse updatedProfile = new ViewProfileRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+                .get().extract().as(ViewProfileResponse.class);
+
+        softly.assertThat(initialProfile.getName()).isNotEqualTo(updatedProfile.getName());
+        softly.assertThat(updatedProfile.getName()).isEqualTo(changeUsernameResponse.getCustomer().getName());
 
 
     }
 
-    // Authorization: Basic VXNlcjEyMzpVc2VyMTIzJA==
-
-    @Test
-    @DisplayName("User can view his profile")
-    public void userCanViewProfileTest() {
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", "Basic VXNlcjEyMzpVc2VyMTIzJA==")
-                .get("http://localhost:4111/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .body("username", Matchers.equalTo("User123"));
-    }
-
-    @Test
-    @DisplayName("User can change his username for valid")
-    public void userCanChangeHisUserValidNameTest() {
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", "Basic VXNlcjEyMzpVc2VyMTIzJA==")
-                .body("""
-                        {
-                          "name": "New Name"
-                        }
-                        """)
-                .put("http://localhost:4111/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .body("message", Matchers.equalTo("Profile updated successfully"));
-    }
-
-    @Test
-    @DisplayName("User can view his updated profile")
-    public void userCanViewUpdatedProfileTest() {
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", "Basic VXNlcjEyMzpVc2VyMTIzJA==")
-                .get("http://localhost:4111/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .body("name", Matchers.equalTo("New Name"));
-    }
 
     // negative
 
@@ -142,41 +67,31 @@ public class ChangeUsernameTest {
                 Arguments.of("Ira"),
                 Arguments.of("Ira Ira Ira"),
                 Arguments.of("Ira Ira123"),
-                Arguments.of("Ira Ira$!")
+                Arguments.of("Ira Ira$!"),
+                Arguments.of("Ira  Ira")  // two words with double space
         );
     }
 
     @MethodSource("InvalidNames")
     @ParameterizedTest
     @DisplayName("User can not change for invalid name + check that name is not changed")
-    public void userCanNotDepositAccountInvalidDataTest(String name) {
-        String requestBody = String.format(
-                """
-                        {
-                          "name": %s
-                        }
-                        
-                        """, name);
+    public void userCanNotChangeForInvalidNameTest(String name) {
+        ViewProfileResponse initialProfile = new ViewProfileRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+                .get().extract().as(ViewProfileResponse.class);
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", "Basic VXNlcjEyMzpVc2VyMTIzJA==")
-                .body(requestBody)
-                .put("http://localhost:4111/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_BAD_REQUEST);
+        softly.assertThat(initialProfile.getName()).isEqualTo(null);
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", "Basic VXNlcjEyMzpVc2VyMTIzJA==")
-                .get("http://localhost:4111/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .body("name", Matchers.equalTo("New Name"));
+        ChangeUserNameRequest newNameRequest = ChangeUserNameRequest.builder().name(name).build();
+
+        new ChangeUsernameRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword),
+                ResponseSpecifications.returnsBadRequest("Name must contain two words with letters only"))
+                .put(newNameRequest);
+
+
+        ViewProfileResponse updatedProfile = new ViewProfileRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+                .get().extract().as(ViewProfileResponse.class);
+
+        softly.assertThat(updatedProfile.getName()).isEqualTo(initialProfile.getName());
     }
 
 }
