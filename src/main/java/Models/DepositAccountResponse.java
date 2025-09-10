@@ -13,10 +13,10 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 
-public class DepositAccountResponse extends BaseModel{
+public class DepositAccountResponse<T extends BaseModel> extends BaseModel {
 
-private long id;
-private String accountNumber;
-private float balance;
-private List<TransactionsResponse> transactions;
+    private long id;
+    private String accountNumber;
+    private float balance;
+    private List<TransactionsResponse> transactions;
 }
