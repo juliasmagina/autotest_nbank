@@ -2,10 +2,14 @@ package iteration2;
 
 import Generators.RandomData;
 import Models.*;
-import Requests.TransferRequester;
+import Models.comparison.ModelAssertions;
+import Requests.skeleton.Endpoint;
+import Requests.skeleton.requesters.CrudRequester;
+import Requests.skeleton.requesters.ValidatedCrudRequester;
 import Specs.RequestSpecifications;
 import Specs.ResponseSpecifications;
-import iteration2.Steps.*;
+import iteration2.Steps.AdminSteps;
+import iteration2.Steps.UserSteps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,23 +32,23 @@ public class TransferBetweenAccountsTest extends BaseTest {
 
     @BeforeEach
     public void setUp() {
-        CreateUserRequest user1 = CreateUserSteps.createUser();
-        CreateUserRequest user2 = CreateUserSteps.createUser();
+        CreateUserRequest user1 = AdminSteps.createUser();
+        CreateUserRequest user2 = AdminSteps.createUser();
         this.user1 = user1;
         this.user2 = user2;
         this.generatedUsername1 = user1.getUsername();
         this.generatedPassword1 = user1.getPassword();
 
 
-        CreateAccountResponse account1 = CreateAccountSteps.createAccount(user1);
-        CreateAccountResponse account2 = CreateAccountSteps.createAccount(user2);
+        CreateAccountResponse account1 = UserSteps.createAccount(user1);
+        CreateAccountResponse account2 = UserSteps.createAccount(user2);
 
 
         //User can deposit account for 5000, but user can transfer 10000, so we need 3 transactions to get enough balance
         int transactionQuantity = 3;
 
         for (int i = 0; i < transactionQuantity; i++) {
-            DepositAccountResponse deposit = DepositAccountSteps.deposit(user1, account1);
+            DepositAccountResponse<BaseModel> deposit = UserSteps.deposit(user1, account1);
         }
 
         this.account1 = account1;
@@ -63,16 +67,16 @@ public class TransferBetweenAccountsTest extends BaseTest {
                 .receiverAccountId(account2.getId())
                 .build();
 
-        TransferResponse transferResponse = new TransferRequester(RequestSpecifications.userSpec(generatedUsername1, generatedPassword1), ResponseSpecifications.statusOk())
-                .post(transferRequest).extract().as(TransferResponse.class);
+        TransferResponse transferResponse = new ValidatedCrudRequester<TransferResponse>(Endpoint.TRANSFER,
+                RequestSpecifications.userSpec(generatedUsername1, generatedPassword1), ResponseSpecifications.statusOk())
+                .post(transferRequest);
 
-        softly.assertThat(transferRequest.getSenderAccountId()).isEqualTo(transferResponse.getSenderAccountId());
-        softly.assertThat(transferRequest.getReceiverAccountId()).isEqualTo(transferResponse.getReceiverAccountId());
-        softly.assertThat(transferRequest.getAmount()).isEqualTo(transferResponse.getAmount());
+
+        ModelAssertions.assertThatModels(transferRequest, transferResponse).match();
         softly.assertThat(transferResponse.getMessage()).isEqualTo("Transfer successful");
 
-        List<TransactionsResponse> transactionsForUser1 = CheckTransactionsSteps.checkTransactions(user1, account1);
-        List<TransactionsResponse> transactionsForUser2 = CheckTransactionsSteps.checkTransactions(user2, account2);
+        List<TransactionsResponse> transactionsForUser1 = UserSteps.checkTransactions(user1, account1);
+        List<TransactionsResponse> transactionsForUser2 = UserSteps.checkTransactions(user2, account2);
 
         softly.assertThat(transactionsForUser1).as("Transaction list should not be empty").isNotEmpty();
         softly.assertThat(transactionsForUser2).as("Transaction list should not be empty").isNotEmpty();
@@ -82,8 +86,8 @@ public class TransferBetweenAccountsTest extends BaseTest {
         softly.assertThat(transactionsForUser2.stream().filter(s -> s.getType().equals(TYPES.TRANSFER_IN))
                 .findFirst().get().getAmount()).isEqualTo(transferResponse.getAmount());
 
-        List<CreateAccountResponse> accountResponses1 = CheckAccountsSteps.checkAccount(user1);
-        List<CreateAccountResponse> accountResponses2 = CheckAccountsSteps.checkAccount(user2);
+        List<CreateAccountResponse> accountResponses1 = UserSteps.checkAccount(user1);
+        List<CreateAccountResponse> accountResponses2 = UserSteps.checkAccount(user2);
 
 
         softly.assertThat(accountResponses1).isNotEmpty();
@@ -103,16 +107,15 @@ public class TransferBetweenAccountsTest extends BaseTest {
                 .receiverAccountId(account2.getId())
                 .build();
 
-        TransferResponse transferResponse = new TransferRequester(RequestSpecifications.userSpec(generatedUsername1, generatedPassword1), ResponseSpecifications.statusOk())
-                .post(transferRequest).extract().as(TransferResponse.class);
+        TransferResponse transferResponse = new ValidatedCrudRequester<TransferResponse>(Endpoint.TRANSFER,
+                RequestSpecifications.userSpec(generatedUsername1, generatedPassword1), ResponseSpecifications.statusOk())
+                .post(transferRequest);
 
-        softly.assertThat(transferRequest.getSenderAccountId()).isEqualTo(transferResponse.getSenderAccountId());
-        softly.assertThat(transferRequest.getReceiverAccountId()).isEqualTo(transferResponse.getReceiverAccountId());
-        softly.assertThat(transferRequest.getAmount()).isEqualTo(transferResponse.getAmount());
+        ModelAssertions.assertThatModels(transferRequest, transferResponse).match();
         softly.assertThat(transferResponse.getMessage()).isEqualTo("Transfer successful");
 
-        List<TransactionsResponse> transactionsForUser1 = CheckTransactionsSteps.checkTransactions(user1, account1);
-        List<TransactionsResponse> transactionsForUser2 = CheckTransactionsSteps.checkTransactions(user2, account2);
+        List<TransactionsResponse> transactionsForUser1 = UserSteps.checkTransactions(user1, account1);
+        List<TransactionsResponse> transactionsForUser2 = UserSteps.checkTransactions(user2, account2);
 
         softly.assertThat(transactionsForUser1).as("Transaction list should not be empty").isNotEmpty();
         softly.assertThat(transactionsForUser2).as("Transaction list should not be empty").isNotEmpty();
@@ -122,8 +125,8 @@ public class TransferBetweenAccountsTest extends BaseTest {
         softly.assertThat(transactionsForUser2.stream().filter(s -> s.getType().equals(TYPES.TRANSFER_IN))
                 .findFirst().get().getAmount()).isEqualTo(transferResponse.getAmount());
 
-        List<CreateAccountResponse> accountResponses1 = CheckAccountsSteps.checkAccount(user1);
-        List<CreateAccountResponse> accountResponses2 = CheckAccountsSteps.checkAccount(user2);
+        List<CreateAccountResponse> accountResponses1 = UserSteps.checkAccount(user1);
+        List<CreateAccountResponse> accountResponses2 = UserSteps.checkAccount(user2);
 
 
         softly.assertThat(accountResponses1).isNotEmpty();
@@ -154,14 +157,15 @@ public class TransferBetweenAccountsTest extends BaseTest {
                 .receiverAccountId(account2.getId())
                 .build();
 
-        new TransferRequester(RequestSpecifications.userSpec(generatedUsername1, generatedPassword1), ResponseSpecifications.returnsBadRequest(error))
+        new CrudRequester(Endpoint.TRANSFER,
+                RequestSpecifications.userSpec(generatedUsername1, generatedPassword1), ResponseSpecifications.returnsBadRequest(error))
                 .post(transferRequest);
 
-        List<TransactionsResponse> transactionsForUser2 = CheckTransactionsSteps.checkTransactions(user2, account2);
+        List<TransactionsResponse> transactionsForUser2 = UserSteps.checkTransactions(user2, account2);
 
         softly.assertThat(transactionsForUser2).isEmpty();
 
-        List<CreateAccountResponse> accountResponses2 = CheckAccountsSteps.checkAccount(user2);
+        List<CreateAccountResponse> accountResponses2 = UserSteps.checkAccount(user2);
 
         softly.assertThat(accountResponses2.getFirst().getBalance()).isEqualTo(0.0f);
 
