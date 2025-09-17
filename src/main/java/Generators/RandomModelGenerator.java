@@ -46,7 +46,7 @@ public class RandomModelGenerator {
         if (type.equals(String.class)) {
             return UUID.randomUUID().toString().substring(0, 8);
         } else if (type.equals(Integer.class) || type.equals(int.class)) {
-            return random.nextInt(1000);
+            return random.nextInt(10000);
         } else if (type.equals(Long.class) || type.equals(long.class)) {
             return random.nextLong();
         } else if (type.equals(Double.class) || type.equals(double.class)) {
@@ -70,6 +70,10 @@ public class RandomModelGenerator {
             return Integer.parseInt(result);
         } else if (type.equals(Long.class) || type.equals(long.class)) {
             return Long.parseLong(result);
+        } else if (type.equals(Float.class) || type.equals(float.class)) {
+            return Float.parseFloat(result);
+        } else if (type.equals(Double.class) || type.equals(double.class)) {
+            return Double.parseDouble(result);
         } else {
             return result;
         }
@@ -87,5 +91,32 @@ public class RandomModelGenerator {
             }
         }
         return Collections.emptyList();
+    }
+
+    public static <T> T generate(Class<T> clazz, Map<String, Object> customValues) {
+        try {
+            T instance = clazz.getDeclaredConstructor().newInstance();
+            for (Field field : getAllFields(clazz)) {
+                field.setAccessible(true);
+
+                // Проверяем, есть ли кастомное значение для этого поля
+                if (customValues.containsKey(field.getName())) {
+                    field.set(instance, customValues.get(field.getName()));
+                    continue;
+                }
+
+                Object value;
+                GeneratingRule rule = field.getAnnotation(GeneratingRule.class);
+                if (rule != null) {
+                    value = generateFromRegex(rule.regex(), field.getType());
+                } else {
+                    value = generateRandomValue(field);
+                }
+                field.set(instance, value);
+            }
+            return instance;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate entity", e);
+        }
     }
 }
