@@ -1,4 +1,4 @@
-package iteration2.Steps;
+package Steps;
 
 import Generators.RandomModelGenerator;
 import Models.CreateUserRequest;

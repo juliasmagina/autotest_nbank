@@ -1,4 +1,4 @@
-package iteration2;
+package iteration2.api;
 
 import Generators.RandomModelGenerator;
 import Models.ChangeUserNameRequest;
@@ -11,7 +11,7 @@ import Requests.skeleton.requesters.CrudRequester;
 import Requests.skeleton.requesters.ValidatedCrudRequester;
 import Specs.RequestSpecifications;
 import Specs.ResponseSpecifications;
-import iteration2.Steps.AdminSteps;
+import Steps.AdminSteps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -60,8 +60,6 @@ public class ChangeUsernameTest extends BaseTest {
 
         softly.assertThat(initialProfile.getName()).isNotEqualTo(updatedProfile.getName());
         softly.assertThat(updatedProfile.getName()).isEqualTo(changeUsernameResponse.getCustomer().getName());
-
-
     }
 
 

@@ -1,4 +1,4 @@
-package iteration2;
+package iteration2.api;
 
 import Generators.RandomData;
 import Models.*;
@@ -8,8 +8,8 @@ import Requests.skeleton.requesters.CrudRequester;
 import Requests.skeleton.requesters.ValidatedCrudRequester;
 import Specs.RequestSpecifications;
 import Specs.ResponseSpecifications;
-import iteration2.Steps.AdminSteps;
-import iteration2.Steps.UserSteps;
+import Steps.AdminSteps;
+import Steps.UserSteps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

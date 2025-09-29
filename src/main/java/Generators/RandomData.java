@@ -28,6 +28,14 @@ public class RandomData {
 
     }
 
+    public static float getAmount() {
+        int min = 1;
+        int max = 10000;
+        int number = ThreadLocalRandom.current().nextInt(min, max);
+        return (float) number;
+
+    }
+
     public static String getNewUsername() {
         return RandomStringUtils.randomAlphabetic(5)
                 + " " + RandomStringUtils.randomAlphabetic(5);
