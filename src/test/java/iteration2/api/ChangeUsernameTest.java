@@ -1,15 +1,17 @@
-package iteration2;
+package iteration2.api;
 
-import Generators.RandomData;
+import Generators.RandomModelGenerator;
 import Models.ChangeUserNameRequest;
 import Models.ChangeUsernameResponse;
 import Models.CreateUserRequest;
 import Models.ViewProfileResponse;
-import Requests.ChangeUsernameRequester;
-import Requests.ViewProfileRequester;
+import Models.comparison.ModelAssertions;
+import Requests.skeleton.Endpoint;
+import Requests.skeleton.requesters.CrudRequester;
+import Requests.skeleton.requesters.ValidatedCrudRequester;
 import Specs.RequestSpecifications;
 import Specs.ResponseSpecifications;
-import iteration2.Steps.CreateUserSteps;
+import Steps.AdminSteps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,7 @@ public class ChangeUsernameTest extends BaseTest {
 
     @BeforeEach
     public void setUp() {
-        CreateUserRequest user = CreateUserSteps.createUser();
+        CreateUserRequest user = AdminSteps.createUser();
         this.generatedUsername = user.getUsername();
         this.generatedPassword = user.getPassword();
     }
@@ -36,26 +38,28 @@ public class ChangeUsernameTest extends BaseTest {
     @DisplayName("User can change his name for two words")
     public void userCanChangeHisNameTest() {
 
-        ViewProfileResponse initialProfile = new ViewProfileRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
-                .get().extract().as(ViewProfileResponse.class);
+        ViewProfileResponse initialProfile = new ValidatedCrudRequester<ViewProfileResponse>(Endpoint.VIEW_PROFILE,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+                .get();
 
         softly.assertThat(initialProfile.getName()).isEqualTo(null);
 
-        ChangeUserNameRequest newNameRequest = ChangeUserNameRequest.builder().name(RandomData.getNewUsername()).build();
 
-        ChangeUsernameResponse changeUsernameResponse = new ChangeUsernameRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword),
+        ChangeUserNameRequest newNameRequest = RandomModelGenerator.generate(ChangeUserNameRequest.class);
+
+        ChangeUsernameResponse changeUsernameResponse = new ValidatedCrudRequester<ChangeUsernameResponse>(Endpoint.CHANGE_NAME,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword),
                 ResponseSpecifications.statusOk())
-                .put(newNameRequest).extract().as(ChangeUsernameResponse.class);
+                .update(newNameRequest);
 
-        softly.assertThat(newNameRequest.getName()).isEqualTo(changeUsernameResponse.getCustomer().getName());
+        ModelAssertions.assertThatModels(newNameRequest, changeUsernameResponse.getCustomer()).match();
 
-        ViewProfileResponse updatedProfile = new ViewProfileRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
-                .get().extract().as(ViewProfileResponse.class);
+        ViewProfileResponse updatedProfile = new ValidatedCrudRequester<ViewProfileResponse>(Endpoint.VIEW_PROFILE,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+                .get();
 
         softly.assertThat(initialProfile.getName()).isNotEqualTo(updatedProfile.getName());
         softly.assertThat(updatedProfile.getName()).isEqualTo(changeUsernameResponse.getCustomer().getName());
-
-
     }
 
 
@@ -76,20 +80,23 @@ public class ChangeUsernameTest extends BaseTest {
     @ParameterizedTest
     @DisplayName("User can not change for invalid name + check that name is not changed")
     public void userCanNotChangeForInvalidNameTest(String name) {
-        ViewProfileResponse initialProfile = new ViewProfileRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
-                .get().extract().as(ViewProfileResponse.class);
+        ViewProfileResponse initialProfile = new ValidatedCrudRequester<ViewProfileResponse>(Endpoint.VIEW_PROFILE,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+                .get();
 
         softly.assertThat(initialProfile.getName()).isEqualTo(null);
 
         ChangeUserNameRequest newNameRequest = ChangeUserNameRequest.builder().name(name).build();
 
-        new ChangeUsernameRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword),
+        new CrudRequester(Endpoint.CHANGE_NAME,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword),
                 ResponseSpecifications.returnsBadRequest("Name must contain two words with letters only"))
-                .put(newNameRequest);
+                .update(newNameRequest);
 
 
-        ViewProfileResponse updatedProfile = new ViewProfileRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
-                .get().extract().as(ViewProfileResponse.class);
+        ViewProfileResponse updatedProfile = new ValidatedCrudRequester<ViewProfileResponse>(Endpoint.VIEW_PROFILE,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+                .get();
 
         softly.assertThat(updatedProfile.getName()).isEqualTo(initialProfile.getName());
     }

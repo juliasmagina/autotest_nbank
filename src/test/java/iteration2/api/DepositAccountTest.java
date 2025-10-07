@@ -1,12 +1,15 @@
-package iteration2;
+package iteration2.api;
 
 import Generators.RandomData;
 import Models.*;
-import Requests.*;
+import Models.comparison.ModelAssertions;
+import Requests.skeleton.Endpoint;
+import Requests.skeleton.requesters.CrudRequester;
+import Requests.skeleton.requesters.ValidatedCrudRequester;
 import Specs.RequestSpecifications;
 import Specs.ResponseSpecifications;
-import iteration2.Steps.CreateAccountSteps;
-import iteration2.Steps.CreateUserSteps;
+import Steps.AdminSteps;
+import Steps.UserSteps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +18,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Stream;
 
 public class DepositAccountTest extends BaseTest {
@@ -26,10 +28,10 @@ public class DepositAccountTest extends BaseTest {
 
     @BeforeEach
     public void setUp() {
-        CreateUserRequest user = CreateUserSteps.createUser();
+        CreateUserRequest user = AdminSteps.createUser();
         this.generatedUsername = user.getUsername();
         this.generatedPassword = user.getPassword();
-        this.createAccountResponse = CreateAccountSteps.createAccount(user);
+        this.createAccountResponse = UserSteps.createAccount(user);
 
     }
 
@@ -43,15 +45,16 @@ public class DepositAccountTest extends BaseTest {
                 .balance(RandomData.getBalance())
                 .build();
 
-        DepositAccountResponse depositAccountResponse = new DepostAccountRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
-                .post(depositAccountRequest).extract().as(DepositAccountResponse.class);
+        DepositAccountResponse depositAccountResponse = new ValidatedCrudRequester<DepositAccountResponse>(Endpoint.DEPOSIT,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+                .post(depositAccountRequest);
 
-        softly.assertThat(depositAccountRequest.getId()).isEqualTo(depositAccountResponse.getId());
-        softly.assertThat(depositAccountRequest.getBalance()).isEqualTo(depositAccountResponse.getBalance());
+        ModelAssertions.assertThatModels(depositAccountRequest, depositAccountResponse).match();
         softly.assertThat(createAccountResponse.getAccountNumber()).isEqualTo(depositAccountResponse.getAccountNumber());
 
 
-        List<TransactionsResponse> transactions = new CheckTransactionsRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+        List<TransactionsResponse> transactions = new CrudRequester(Endpoint.CHECK_TRANSACTIONS,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
                 .get(createAccountResponse.getId())
                 .extract()
                 .jsonPath()  // Используем jsonPath() для работы с коллекциями
@@ -64,7 +67,8 @@ public class DepositAccountTest extends BaseTest {
         softly.assertThat(transactions.getFirst().getAmount())
                 .isEqualTo(depositAccountResponse.getBalance());
 
-        List<CreateAccountResponse> accountResponses = new CheckAccountRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+        List<CreateAccountResponse> accountResponses = new CrudRequester(Endpoint.CHECK_ACCOUNT,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
                 .get()
                 .extract()
                 .jsonPath()
@@ -87,15 +91,16 @@ public class DepositAccountTest extends BaseTest {
                 .balance(5000)
                 .build();
 
-        DepositAccountResponse depositAccountResponse = new DepostAccountRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
-                .post(depositAccountRequest).extract().as(DepositAccountResponse.class);
+        DepositAccountResponse depositAccountResponse = new ValidatedCrudRequester<DepositAccountResponse>(Endpoint.DEPOSIT,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+                .post(depositAccountRequest);
 
-        softly.assertThat(depositAccountRequest.getId()).isEqualTo(depositAccountResponse.getId());
-        softly.assertThat(depositAccountRequest.getBalance()).isEqualTo(depositAccountResponse.getBalance());
+        ModelAssertions.assertThatModels(depositAccountRequest, depositAccountResponse).match();
         softly.assertThat(createAccountResponse.getAccountNumber()).isEqualTo(depositAccountResponse.getAccountNumber());
 
 
-        List<TransactionsResponse> transactions = new CheckTransactionsRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+        List<TransactionsResponse> transactions = new CrudRequester(Endpoint.CHECK_TRANSACTIONS,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
                 .get(createAccountResponse.getId())
                 .extract()
                 .jsonPath()  // Используем jsonPath() для работы с коллекциями
@@ -108,7 +113,8 @@ public class DepositAccountTest extends BaseTest {
         softly.assertThat(transactions.getFirst().getAmount())
                 .isEqualTo(depositAccountResponse.getBalance());
 
-        List<CreateAccountResponse> accountResponses = new CheckAccountRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+        List<CreateAccountResponse> accountResponses = new CrudRequester(Endpoint.CHECK_ACCOUNT,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
                 .get()
                 .extract()
                 .jsonPath()
@@ -141,11 +147,11 @@ public class DepositAccountTest extends BaseTest {
                 .balance(balance)
                 .build();
 
-        new DepostAccountRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.returnsBadRequest(error))
+        new CrudRequester(Endpoint.DEPOSIT, RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.returnsBadRequest(error))
                 .post(depositAccountRequest);
 
 
-        List<TransactionsResponse> transactions = new CheckTransactionsRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+        List<TransactionsResponse> transactions = new CrudRequester(Endpoint.CHECK_TRANSACTIONS, RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
                 .get(createAccountResponse.getId())
                 .extract()
                 .jsonPath()  // Используем jsonPath() для работы с коллекциями
@@ -155,7 +161,8 @@ public class DepositAccountTest extends BaseTest {
                 .as("Transaction list should  be empty")
                 .isEmpty();
 
-        List<CreateAccountResponse> accountResponses = new CheckAccountRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
+        List<CreateAccountResponse> accountResponses = new CrudRequester(Endpoint.CHECK_ACCOUNT,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
                 .get()
                 .extract()
                 .jsonPath()
@@ -180,25 +187,28 @@ public class DepositAccountTest extends BaseTest {
                 .role(ROLES.USER.toString())
                 .build();
 
-        new AdminCreateUserRequester(
+        new CrudRequester(Endpoint.ADMIN_USER,
                 RequestSpecifications.adminSpec(),
                 ResponseSpecifications.entityWasCreated())
                 .post(secondUserRequest);
 
-        CreateAccountResponse secondUserAccount = new CreateAccountRequester(
+        CreateAccountResponse secondUserAccount = new ValidatedCrudRequester<CreateAccountResponse>(
+                Endpoint.ACCOUNT,
                 RequestSpecifications.userSpec(secondUserRequest.getUsername(), secondUserRequest.getPassword()),
                 ResponseSpecifications.entityWasCreated())
-                .post(null).extract().as(CreateAccountResponse.class);
+                .post(null);
 
         DepositAccountRequest depositAccountRequest = DepositAccountRequest.builder()
                 .id(secondUserAccount.getId())
                 .balance(RandomData.getBalance())
                 .build();
 
-        new DepostAccountRequester(RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.returnsForbidden("Unauthorized access to account"))
+        new CrudRequester(Endpoint.DEPOSIT,
+                RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.returnsForbidden("Unauthorized access to account"))
                 .post(depositAccountRequest);
 
-        List<CreateAccountResponse> updatedAccount = new CheckAccountRequester(
+        List<CreateAccountResponse> updatedAccount = new CrudRequester(
+                Endpoint.CHECK_ACCOUNT,
                 RequestSpecifications.userSpec(secondUserRequest.getUsername(), secondUserRequest.getPassword()),
                 ResponseSpecifications.statusOk())
                 .get()
@@ -209,18 +219,5 @@ public class DepositAccountTest extends BaseTest {
 
     }
 
-    @Test
-    @DisplayName("User can not Deposit a non-existing Account")
-    public void userCanNotDepositNonExistingAccount() {
-
-        long nonExistingAccountId = Integer.MAX_VALUE + new Random().nextInt(1000) + 1L;
-
-        DepositAccountRequest depositAccountRequest = DepositAccountRequest.builder()
-                .id(createAccountResponse.getId())
-                .balance(nonExistingAccountId)
-                .build();
-
-
-    }
 
 }
