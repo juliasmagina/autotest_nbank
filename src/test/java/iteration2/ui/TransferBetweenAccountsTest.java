@@ -1,38 +1,18 @@
 package iteration2.ui;
 
-import Generators.RandomData;
-import Models.*;
-import Requests.skeleton.Endpoint;
-import Requests.skeleton.requesters.CrudRequester;
-import Specs.RequestSpecifications;
-import Specs.ResponseSpecifications;
-import Steps.AdminSteps;
-import Steps.UserSteps;
-import com.codeborne.selenide.Configuration;
-import com.codeborne.selenide.Selectors;
-import com.codeborne.selenide.Selenide;
-import org.junit.jupiter.api.BeforeAll;
+import api.Models.*;
+import api.Steps.AdminSteps;
+import api.Steps.UserSteps;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.Alert;
+import ui.pages.BankAlert;
+import ui.pages.TransferPage;
+import ui.pages.UserDashboard;
 
 import java.util.List;
-import java.util.Map;
 
-import static com.codeborne.selenide.Selenide.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TransferBetweenAccountsTest {
-
-    @BeforeAll
-    public static void setUpSelenide() {
-        Configuration.remote = "http://localhost:4444/wd/hub";
-        Configuration.baseUrl = "http://host.docker.internal:3000";
-        Configuration.browserSize = "1920x1080";
-        Configuration.browser = "chrome";
-
-        Configuration.browserCapabilities.setCapability("selenoid:options",
-                Map.of("enableVNC", true, "enableLog", true));
-    }
+public class TransferBetweenAccountsTest extends BaseUITest {
 
     @Test
     public void userCanTransferMoneyTest() {
@@ -49,29 +29,9 @@ public class TransferBetweenAccountsTest {
         }
         List<CreateAccountResponse> afterDepositAccounts1 = UserSteps.checkAccount(user1);
         float balanceAfterDeposit = afterDepositAccounts1.get(0).getBalance();
-        String userBasicAuth = new CrudRequester(Endpoint.LOGIN,
-                RequestSpecifications.unauthSpec(), ResponseSpecifications.statusOk())
-                .post(LoginUserRequest.builder().username(user1.getUsername()).password(user1.getPassword()).build())
-                .extract()
-                .header("Authorization");
-        Selenide.open("/");
-        executeJavaScript("localStorage.setItem('authToken', arguments[0]);", userBasicAuth);
+        authAsUser(user1);
 
-        Selenide.open("/dashboard");
-
-        $(Selectors.byText("\uD83D\uDD04 Make a Transfer")).click();
-        $(".account-selector").selectOption(1);
-        $(Selectors.byAttribute("placeholder", "Enter recipient name")).setValue(user2.getUsername());
-        $(Selectors.byAttribute("placeholder", "Enter recipient account number")).setValue(account2.getAccountNumber());
-        String amount = String.valueOf(RandomData.getAmount());
-        $(Selectors.byAttribute("placeholder", "Enter amount")).setValue(amount);
-        $("#confirmCheck").setSelected(true);
-        $(Selectors.byText("\uD83D\uDE80 Send Transfer")).click();
-
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText.contains("✅ Successfully transferred" + amount + " to account " + account2.getAccountNumber() + "!"));
-        alert.accept();
+        new UserDashboard().open().transfer().getPage(TransferPage.class).sendTransfer(user2, account2).checkAlertMessageAndAccept(BankAlert.SUCCESSFULLY_TRANSFERRED.getMessage());
 
         List<CreateAccountResponse> finalAccounts1 = UserSteps.checkAccount(user1);
         List<CreateAccountResponse> finalAccounts2 = UserSteps.checkAccount(user2);
@@ -88,7 +48,7 @@ public class TransferBetweenAccountsTest {
                 .get()
                 .getBalance();
 
-        float amountFloat = Float.parseFloat(amount);
+        float amountFloat = UserSteps.checkAccount(user2).getFirst().getBalance();
 
         assertThat(finalBalance1).isEqualTo(balanceAfterDeposit - amountFloat);
         assertThat(finalBalance2).isEqualTo(initialBalance2 + amountFloat);
@@ -115,29 +75,9 @@ public class TransferBetweenAccountsTest {
         }
         List<CreateAccountResponse> afterDepositAccounts1 = UserSteps.checkAccount(user1);
         float balanceAfterDeposit = afterDepositAccounts1.get(0).getBalance();
-        String userBasicAuth = new CrudRequester(Endpoint.LOGIN,
-                RequestSpecifications.unauthSpec(), ResponseSpecifications.statusOk())
-                .post(LoginUserRequest.builder().username(user1.getUsername()).password(user1.getPassword()).build())
-                .extract()
-                .header("Authorization");
-        Selenide.open("/");
-        executeJavaScript("localStorage.setItem('authToken', arguments[0]);", userBasicAuth);
+        authAsUser(user1);
 
-        Selenide.open("/dashboard");
-
-        $(Selectors.byText("\uD83D\uDD04 Make a Transfer")).click();
-        $(".account-selector").selectOption(1);
-        $(Selectors.byAttribute("placeholder", "Enter recipient name")).setValue(user2.getUsername());
-        $(Selectors.byAttribute("placeholder", "Enter recipient account number")).setValue(account2.getAccountNumber());
-        String amount = "10001";
-        $(Selectors.byAttribute("placeholder", "Enter amount")).setValue(amount);
-        $("#confirmCheck").setSelected(true);
-        $(Selectors.byText("\uD83D\uDE80 Send Transfer")).click();
-
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText.contains("❌ Error: Invalid transfer: insufficient funds or invalid accounts"));
-        alert.accept();
+        new UserDashboard().open().transfer().getPage(TransferPage.class).sendTransferInvalidAmount(user2, account2).checkAlertMessageAndAccept(BankAlert.INVALID_TRANSFER.getMessage());
 
         List<CreateAccountResponse> finalAccounts1 = UserSteps.checkAccount(user1);
         List<CreateAccountResponse> finalAccounts2 = UserSteps.checkAccount(user2);
