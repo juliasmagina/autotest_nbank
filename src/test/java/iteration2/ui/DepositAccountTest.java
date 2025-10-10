@@ -1,60 +1,33 @@
 package iteration2.ui;
 
-import Generators.RandomData;
-import Models.*;
-import Requests.skeleton.Endpoint;
-import Requests.skeleton.requesters.CrudRequester;
-import Specs.RequestSpecifications;
-import Specs.ResponseSpecifications;
-import Steps.AdminSteps;
-import Steps.UserSteps;
-import com.codeborne.selenide.Configuration;
-import com.codeborne.selenide.Selectors;
-import com.codeborne.selenide.Selenide;
-import org.junit.jupiter.api.BeforeAll;
+import api.Models.CreateAccountResponse;
+import api.Models.CreateUserRequest;
+import api.Models.TYPES;
+import api.Models.TransactionsResponse;
+import api.Steps.AdminSteps;
+import api.Steps.UserSteps;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.Alert;
+import ui.pages.BankAlert;
+import ui.pages.DepositPage;
+import ui.pages.UserDashboard;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
-import static com.codeborne.selenide.Selenide.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DepositAccountTest {
-
-    @BeforeAll
-    public static void setUpSelenide() {
-        Configuration.remote = "http://localhost:4444/wd/hub";
-        Configuration.baseUrl = "http://host.docker.internal:3000";
-        Configuration.browserSize = "1920x1080";
-        Configuration.browser = "chrome";
-        Configuration.browserCapabilities.setCapability("selenoid:options", Map.of("enableVNC", true, "enableLog", true));
-    }
+public class DepositAccountTest extends BaseUITest {
 
     @Test
     public void userCanDepositTest() {
         CreateUserRequest user = AdminSteps.createUser();
         CreateAccountResponse account = UserSteps.createAccount(user);
         String accountNumber = UserSteps.checkAccount(user).getFirst().getAccountNumber();
-        String userBasicAuth = new CrudRequester(Endpoint.LOGIN, RequestSpecifications.unauthSpec(), ResponseSpecifications.statusOk()).post(LoginUserRequest.builder().username(user.getUsername()).password(user.getPassword()).build()).extract().header("Authorization");
+        authAsUser(user);
 
-        Selenide.open("/");
-        executeJavaScript("localStorage.setItem('authToken', arguments[0]);", userBasicAuth);
+        new UserDashboard().open().depositAccount().getPage(DepositPage.class).selectAccountAndEnterAmount().checkAlertMessageAndAccept(BankAlert.SUCCESSFULLY_DEPOSIT.getMessage());
 
-        Selenide.open("/dashboard");
-
-        $(Selectors.byText("\uD83D\uDCB0 Deposit Money")).click();
-        $(".account-selector").selectOption(1);
-        String balance = String.valueOf(RandomData.getBalance());
-        $(Selectors.byAttribute("placeholder", "Enter amount")).setValue(balance);
-        $(Selectors.byText("\uD83D\uDCB5 Deposit")).click();
-
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText.contains("✅ Successfully deposited " + balance + " to account " + accountNumber + " !"));
-        alert.accept();
+        String balance = String.valueOf(UserSteps.checkAccount(user).getFirst().getBalance());
 
         List<TransactionsResponse> checkedTransactions = UserSteps.checkTransactions(user, account);
 
@@ -71,23 +44,9 @@ public class DepositAccountTest {
 
         CreateUserRequest user = AdminSteps.createUser();
         CreateAccountResponse account = UserSteps.createAccount(user);
-        String userBasicAuth = new CrudRequester(Endpoint.LOGIN, RequestSpecifications.unauthSpec(), ResponseSpecifications.statusOk()).post(LoginUserRequest.builder().username(user.getUsername()).password(user.getPassword()).build()).extract().header("Authorization");
+        authAsUser(user);
 
-        Selenide.open("/");
-        executeJavaScript("localStorage.setItem('authToken', arguments[0]);", userBasicAuth);
-
-        Selenide.open("/dashboard");
-
-        $(Selectors.byText("\uD83D\uDCB0 Deposit Money")).click();
-        $(".account-selector").selectOption(1);
-        String balance = "5001";
-        $(Selectors.byAttribute("placeholder", "Enter amount")).setValue(balance);
-        $(Selectors.byText("\uD83D\uDCB5 Deposit")).click();
-
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText.contains("❌ Please deposit less or equal to 5000$."));
-        alert.accept();
+        new UserDashboard().open().depositAccount().getPage(DepositPage.class).selectAccountAndEnterExcessAmount().checkAlertMessageAndAccept(BankAlert.PLEASE_DEPOSIT_LESS.getMessage());
 
         List<TransactionsResponse> checkedTransactions = UserSteps.checkTransactions(user, account);
 

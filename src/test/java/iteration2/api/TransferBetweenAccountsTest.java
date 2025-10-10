@@ -1,15 +1,15 @@
 package iteration2.api;
 
-import Generators.RandomModelGenerator;
-import Models.*;
-import Models.comparison.ModelAssertions;
-import Requests.skeleton.Endpoint;
-import Requests.skeleton.requesters.CrudRequester;
-import Requests.skeleton.requesters.ValidatedCrudRequester;
-import Specs.RequestSpecifications;
-import Specs.ResponseSpecifications;
-import Steps.AdminSteps;
-import Steps.UserSteps;
+import api.Generators.RandomModelGenerator;
+import api.Models.*;
+import api.Models.comparison.ModelAssertions;
+import api.Specs.RequestSpecifications;
+import api.Specs.ResponseSpecifications;
+import api.Steps.AdminSteps;
+import api.Steps.UserSteps;
+import api.skeleton.Endpoint;
+import api.skeleton.requesters.CrudRequester;
+import api.skeleton.requesters.ValidatedCrudRequester;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
