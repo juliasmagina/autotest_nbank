@@ -1,28 +1,21 @@
 package iteration2.ui;
 
-import api.Models.CreateUserRequest;
-import api.Specs.RequestSpecifications;
 import api.configs.Config;
 import com.codeborne.selenide.Configuration;
-import com.codeborne.selenide.Selenide;
+import common.extensions.*;
 import iteration2.api.BaseTest;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Map;
 
-import static com.codeborne.selenide.Selenide.executeJavaScript;
-
+@ExtendWith(AdminSessionExtension.class)
+@ExtendWith(UserSessionExtension.class)
+@ExtendWith(CreatingUserAccountExtension.class)
+@ExtendWith(DepositExtension.class)
+@ExtendWith(BrowserMatchExtension.class)
 public class BaseUITest extends BaseTest {
 
-    public void authAsUser(String username, String password) {
-        Selenide.open("/");
-        String userBasicAuth = RequestSpecifications.getUserAuthHeader(username, password);
-        executeJavaScript("localStorage.setItem('authToken', arguments[0]);", userBasicAuth);
-    }
-
-    public void authAsUser(CreateUserRequest createUserRequest) {
-        authAsUser(createUserRequest.getUsername(), createUserRequest.getPassword());
-    }
 
     @BeforeAll
     public static void setUpSelenide() {
