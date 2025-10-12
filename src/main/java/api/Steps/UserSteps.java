@@ -13,6 +13,9 @@ import java.util.List;
 public class UserSteps {
 
 
+    public UserSteps(CreateUserRequest user) {
+    }
+
     public static DepositAccountResponse<BaseModel> deposit(CreateUserRequest user, CreateAccountResponse account) {
         DepositAccountRequest depositAccountRequest = DepositAccountRequest.builder()
                 .id(account.getId())
