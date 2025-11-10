@@ -29,7 +29,7 @@ jobs:
         run: cd infrastructure/docker-compose/ && bash restart-docker.sh && cd ../..
 
       - name: Wait for services to be ready
-          run:|
+        run: |
           echo "Waiting for services to start..."
           timeout 120s bash -c '
           until curl -f -s http://localhost:4111/health > /dev/null; do
