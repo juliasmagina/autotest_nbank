@@ -28,5 +28,17 @@ jobs:
       - name: Set up services
         run: cd infrastructure/docker-compose/ && bash restart-docker.sh && cd ../..
 
+      - name: Wait for services to be ready
+          run:|
+          echo "Waiting for services to start..."
+          # Ожидание пока порт 4111 станет доступен
+          timeout 120s bash -c '
+          until curl -f -s http://localhost:4111/health > /dev/null; do
+          echo "Waiting for server on port 4111..."
+          sleep 5
+          done
+          '
+          echo "All services are ready!"
+
       - name: Run tests
         run: ./mvnw clean test -q
