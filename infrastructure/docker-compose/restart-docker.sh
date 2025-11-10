@@ -22,4 +22,4 @@ for image in $images; do
 done
 
 echo "Start Docker Compose"
-docker compose up
+docker compose up -d
