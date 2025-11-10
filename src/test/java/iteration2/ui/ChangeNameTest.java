@@ -37,7 +37,6 @@ public class ChangeNameTest extends BaseUITest {
 
 
     @Test
-    @Disabled
     @UserSession
     public void userCanNotChangeHisNameForInvalidTest() {
 
