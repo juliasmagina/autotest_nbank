@@ -1,11 +1,9 @@
 package api.Models;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -15,5 +13,6 @@ public class TransferResponse extends BaseModel {
     private String message;
     private long senderAccountId;
     private long receiverAccountId;
+    private String description;
 
 }

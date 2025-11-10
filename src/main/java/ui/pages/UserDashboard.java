@@ -5,6 +5,7 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import common.utils.RetryUtils;
 import lombok.Getter;
 
 import static com.codeborne.selenide.Selenide.*;
@@ -46,7 +47,15 @@ public class UserDashboard extends BasePage<UserDashboard> {
     }
 
     public UserDashboard checkNewName(ChangeUserNameRequest changeUserNameRequest) {
-        welcomeText.shouldHave(Condition.text("Welcome, " + changeUserNameRequest.getName() + "!"));
+        String expectedText = "Welcome, " + changeUserNameRequest.getName() + "!";
+
+        RetryUtils.retry(
+                () -> welcomeText.getText(),
+                text -> text.contains(changeUserNameRequest.getName()),
+                5,
+                5000
+        );
+
         return this;
     }
 

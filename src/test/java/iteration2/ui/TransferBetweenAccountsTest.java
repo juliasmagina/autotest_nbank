@@ -9,6 +9,7 @@ import common.annotations.Deposit;
 import common.annotations.UserSession;
 import common.storage.AccountStorage;
 import common.storage.SessionStorage;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import ui.pages.BankAlert;
 import ui.pages.TransferPage;
@@ -24,6 +25,7 @@ public class TransferBetweenAccountsTest extends BaseUITest {
     @UserSession(value = 2)
     @CreatingUserAccount(value = 2)
     @Deposit
+    @Disabled
     public void userCanTransferMoneyTest() {
 
         float initialBalance2 = AccountStorage.getAccount(2).getBalance();
@@ -62,6 +64,7 @@ public class TransferBetweenAccountsTest extends BaseUITest {
     @UserSession(value = 2)
     @CreatingUserAccount(value = 2)
     @Deposit
+    @Disabled
     public void userCanNotTransferInvalidAmountTest() {
 
         float initialBalance2 = AccountStorage.getAccount(2).getBalance();

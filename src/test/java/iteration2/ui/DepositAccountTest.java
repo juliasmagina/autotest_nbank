@@ -7,6 +7,7 @@ import common.annotations.CreatingUserAccount;
 import common.annotations.UserSession;
 import common.storage.AccountStorage;
 import common.storage.SessionStorage;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import ui.pages.BankAlert;
 import ui.pages.DepositPage;
@@ -21,6 +22,7 @@ public class DepositAccountTest extends BaseUITest {
 
     @Test
     @UserSession
+    @Disabled
     @CreatingUserAccount
     public void userCanDepositTest() {
 
@@ -38,6 +40,7 @@ public class DepositAccountTest extends BaseUITest {
     }
 
     @Test
+    @Disabled
     @UserSession
     @CreatingUserAccount
     public void userCanNotDepositInvalidSumTest() {

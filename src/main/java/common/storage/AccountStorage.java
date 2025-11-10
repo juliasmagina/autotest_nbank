@@ -7,7 +7,7 @@ import java.util.List;
 
 public class AccountStorage {
 
-    private static final AccountStorage INSTANCE = new AccountStorage();
+    private static final ThreadLocal<AccountStorage> INSTANCE = ThreadLocal.withInitial(AccountStorage::new);
 
     private final LinkedList<CreateAccountResponse> accountsList = new LinkedList<>();
 
@@ -16,12 +16,12 @@ public class AccountStorage {
 
     public static void addAccount(List<CreateAccountResponse> accounts) {
         for (CreateAccountResponse account : accounts) {
-            INSTANCE.accountsList.add(account);
+            INSTANCE.get().accountsList.add(account);
         }
     }
 
     public static CreateAccountResponse getAccount(int number) {
-        return INSTANCE.accountsList.get(number - 1);
+        return INSTANCE.get().accountsList.get(number - 1);
     }
 
     public static CreateAccountResponse getAccount() {
@@ -29,7 +29,7 @@ public class AccountStorage {
     }
 
     public static void clear() {
-        INSTANCE.accountsList.clear();
+        INSTANCE.get().accountsList.clear();
     }
 
 }

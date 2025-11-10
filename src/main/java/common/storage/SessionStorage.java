@@ -9,21 +9,26 @@ import java.util.List;
 
 public class SessionStorage {
 
-    private static final SessionStorage INSTANCE = new SessionStorage();
+    private static final ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
 
     private final LinkedHashMap<CreateUserRequest, UserSteps> userStepsmap = new LinkedHashMap<>();
+    private static String authHeader;
 
     private SessionStorage() {
     }
 
+    public static void setAuthHeader(String header) {
+        authHeader = header;
+    }
+
     public static void addUsers(List<CreateUserRequest> users) {
         for (CreateUserRequest user : users) {
-            INSTANCE.userStepsmap.put(user, new UserSteps(user));
+            INSTANCE.get().userStepsmap.put(user, new UserSteps(user));
         }
     }
 
     public static CreateUserRequest getUser(int number) {
-        return new ArrayList<>(INSTANCE.userStepsmap.keySet()).get(number - 1);
+        return new ArrayList<>(INSTANCE.get().userStepsmap.keySet()).get(number - 1);
     }
 
     public static CreateUserRequest getUser() {
@@ -31,7 +36,7 @@ public class SessionStorage {
     }
 
     public static UserSteps getStep(int number) {
-        return new ArrayList<>(INSTANCE.userStepsmap.values()).get(number);
+        return new ArrayList<>(INSTANCE.get().userStepsmap.values()).get(number);
     }
 
     public static UserSteps getStep() {
@@ -39,7 +44,7 @@ public class SessionStorage {
     }
 
     public static void clear() {
-        INSTANCE.userStepsmap.clear();
+        INSTANCE.get().userStepsmap.clear();
     }
 
 

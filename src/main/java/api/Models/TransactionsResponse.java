@@ -1,11 +1,9 @@
 package api.Models;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -17,4 +15,10 @@ public class TransactionsResponse extends BaseModel {
     private TYPES type;
     private String timestamp;
     private long relatedAccountId;
+    private CreateAccountResponse relatedAccount;
+    private String status;
+    private Boolean fraudCheckRequired;
+    private String timestampAsString;
+    private double amountAsDouble;
+
 }

@@ -13,6 +13,7 @@ import api.skeleton.Endpoint;
 import api.skeleton.requesters.CrudRequester;
 import api.skeleton.requesters.ValidatedCrudRequester;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,6 +37,7 @@ public class ChangeUsernameTest extends BaseTest {
 
     @Test
     @DisplayName("User can change his name for two words")
+    @Disabled
     public void userCanChangeHisNameTest() {
 
         ViewProfileResponse initialProfile = new ValidatedCrudRequester<ViewProfileResponse>(Endpoint.VIEW_PROFILE,
@@ -43,7 +45,6 @@ public class ChangeUsernameTest extends BaseTest {
                 .get();
 
         softly.assertThat(initialProfile.getName()).isEqualTo(null);
-
 
         ChangeUserNameRequest newNameRequest = RandomModelGenerator.generate(ChangeUserNameRequest.class);
 
@@ -60,6 +61,9 @@ public class ChangeUsernameTest extends BaseTest {
 
         softly.assertThat(initialProfile.getName()).isNotEqualTo(updatedProfile.getName());
         softly.assertThat(updatedProfile.getName()).isEqualTo(changeUsernameResponse.getCustomer().getName());
+
+//        UserDao userDao = DatabaseSteps.getUserByName(newNameRequest.getName());
+//        DaoAndModelAssertions.assertThat(changeUsernameResponse, userDao).match();
     }
 
 

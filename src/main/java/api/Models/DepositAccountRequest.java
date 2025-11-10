@@ -2,18 +2,19 @@ package api.Models;
 
 
 import api.Generators.GeneratingRule;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+
 public class DepositAccountRequest extends BaseModel {
 
-    private long id;
+    private long accountId;
     @GeneratingRule(regex = "\"^([1-9]\\\\d{0,2}|[1-4]\\\\d{3}|5000)$\"")
-    private float balance;
+    private float amount;
+    private String description;
+
 }

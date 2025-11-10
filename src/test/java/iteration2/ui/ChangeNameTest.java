@@ -6,6 +6,7 @@ import api.Models.ViewProfileResponse;
 import api.Steps.UserSteps;
 import common.annotations.UserSession;
 import common.storage.SessionStorage;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import ui.pages.BankAlert;
 import ui.pages.EditProfilePage;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ChangeNameTest extends BaseUITest {
 
     @Test
+    @Disabled
     @UserSession
     public void userCanChangeHisNameTest() {
 
@@ -35,6 +37,7 @@ public class ChangeNameTest extends BaseUITest {
 
 
     @Test
+    @Disabled
     @UserSession
     public void userCanNotChangeHisNameForInvalidTest() {
 

@@ -41,8 +41,9 @@ public class DepositAccountTest extends BaseTest {
     public void userCanDepositAnAccountTest() {
 
         DepositAccountRequest depositAccountRequest = DepositAccountRequest.builder()
-                .id(createAccountResponse.getId())
-                .balance(RandomData.getBalance())
+                .accountId(createAccountResponse.getId())
+                .amount(RandomData.getBalance())
+                .description("String")
                 .build();
 
         DepositAccountResponse depositAccountResponse = new ValidatedCrudRequester<DepositAccountResponse>(Endpoint.DEPOSIT,
@@ -65,7 +66,7 @@ public class DepositAccountTest extends BaseTest {
                 .isNotEmpty();
 
         softly.assertThat(transactions.getFirst().getAmount())
-                .isEqualTo(depositAccountResponse.getBalance());
+                .isEqualTo(depositAccountResponse.getDepositAmount());
 
         List<CreateAccountResponse> accountResponses = new CrudRequester(Endpoint.CHECK_ACCOUNT,
                 RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
@@ -75,7 +76,7 @@ public class DepositAccountTest extends BaseTest {
                 .getList("", CreateAccountResponse.class);
 
         softly.assertThat(accountResponses).isNotEmpty();
-        softly.assertThat(accountResponses.getFirst().getBalance()).isEqualTo(depositAccountResponse.getBalance());
+        softly.assertThat(accountResponses.getFirst().getBalance()).isEqualTo(depositAccountResponse.getDepositAmount());
         softly.assertThat(accountResponses.getFirst().getId()).isEqualTo(depositAccountResponse.getId());
         softly.assertThat(accountResponses.getFirst().getAccountNumber()).isEqualTo(depositAccountResponse.getAccountNumber());
 
@@ -87,8 +88,9 @@ public class DepositAccountTest extends BaseTest {
     public void userCanDepositAccountFor5000Test() {
 
         DepositAccountRequest depositAccountRequest = DepositAccountRequest.builder()
-                .id(createAccountResponse.getId())
-                .balance(5000)
+                .accountId(createAccountResponse.getId())
+                .amount(5000)
+                .description("String")
                 .build();
 
         DepositAccountResponse depositAccountResponse = new ValidatedCrudRequester<DepositAccountResponse>(Endpoint.DEPOSIT,
@@ -111,7 +113,7 @@ public class DepositAccountTest extends BaseTest {
                 .isNotEmpty();
 
         softly.assertThat(transactions.getFirst().getAmount())
-                .isEqualTo(depositAccountResponse.getBalance());
+                .isEqualTo(depositAccountResponse.getDepositAmount());
 
         List<CreateAccountResponse> accountResponses = new CrudRequester(Endpoint.CHECK_ACCOUNT,
                 RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.statusOk())
@@ -121,7 +123,7 @@ public class DepositAccountTest extends BaseTest {
                 .getList("", CreateAccountResponse.class);
 
         softly.assertThat(accountResponses).isNotEmpty();
-        softly.assertThat(accountResponses.getFirst().getBalance()).isEqualTo(depositAccountResponse.getBalance());
+        softly.assertThat(accountResponses.getFirst().getBalance()).isEqualTo(depositAccountResponse.getDepositAmount());
         softly.assertThat(accountResponses.getFirst().getId()).isEqualTo(depositAccountResponse.getId());
         softly.assertThat(accountResponses.getFirst().getAccountNumber()).isEqualTo(depositAccountResponse.getAccountNumber());
 
@@ -143,8 +145,9 @@ public class DepositAccountTest extends BaseTest {
     public void userCanNotDepositAccountInvalidDataTest(int balance, String error) {
 
         DepositAccountRequest depositAccountRequest = DepositAccountRequest.builder()
-                .id(createAccountResponse.getId())
-                .balance(balance)
+                .accountId(createAccountResponse.getId())
+                .amount(balance)
+                .description("String")
                 .build();
 
         new CrudRequester(Endpoint.DEPOSIT, RequestSpecifications.userSpec(generatedUsername, generatedPassword), ResponseSpecifications.returnsBadRequest(error))
@@ -199,8 +202,9 @@ public class DepositAccountTest extends BaseTest {
                 .post(null);
 
         DepositAccountRequest depositAccountRequest = DepositAccountRequest.builder()
-                .id(secondUserAccount.getId())
-                .balance(RandomData.getBalance())
+                .accountId(secondUserAccount.getId())
+                .amount(RandomData.getBalance())
+                .description("String")
                 .build();
 
         new CrudRequester(Endpoint.DEPOSIT,

@@ -6,10 +6,11 @@ import common.annotations.UserSession;
 import common.storage.SessionStorage;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import ui.pages.BasePage;
 
 import java.util.LinkedList;
 import java.util.List;
+
+import static api.Specs.RequestSpecifications.getUserAuthHeader;
 
 public class UserSessionExtension implements BeforeEachCallback {
     @Override
@@ -29,7 +30,14 @@ public class UserSessionExtension implements BeforeEachCallback {
             SessionStorage.addUsers(users);
 
             int authAsUser = annotation.auth();
-            BasePage.authAsUser(SessionStorage.getUser(authAsUser));
+            CreateUserRequest userToAuth = SessionStorage.getUser(authAsUser);
+            String authHeader = getUserAuthHeader(
+                    userToAuth.getUsername(),
+                    userToAuth.getPassword()
+            );
+
+            // Сохраняем auth header в SessionStorage для использования в тестах
+            SessionStorage.setAuthHeader(authHeader);
         }
     }
 }

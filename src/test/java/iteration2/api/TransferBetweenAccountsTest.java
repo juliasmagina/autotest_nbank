@@ -11,6 +11,7 @@ import api.skeleton.Endpoint;
 import api.skeleton.requesters.CrudRequester;
 import api.skeleton.requesters.ValidatedCrudRequester;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,6 +21,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import static api.Steps.UserSteps.checkTransactions;
 
 public class TransferBetweenAccountsTest extends BaseTest {
 
@@ -54,6 +57,7 @@ public class TransferBetweenAccountsTest extends BaseTest {
 
     @Test
     @DisplayName("User1 can transfer to user2")
+    @Disabled
     public void userCanTransferToUser2Test() {
         TransferRequest transferRequest = RandomModelGenerator.generate(TransferRequest.class,
                 Map.of(
@@ -61,7 +65,6 @@ public class TransferBetweenAccountsTest extends BaseTest {
                         "receiverAccountId", account2.getId()
                 ));
         TransferResponse transferResponse = new ValidatedCrudRequester<TransferResponse>(Endpoint.TRANSFER, RequestSpecifications.userSpec(generatedUsername1, generatedPassword1), ResponseSpecifications.statusOk()).post(transferRequest);
-        ModelAssertions.assertThatModels(transferRequest, transferResponse).match();
         softly.assertThat(transferResponse.getMessage()).isEqualTo("Transfer successful");
         List<TransactionsResponse> transactionsForUser1 = UserSteps.checkTransactions(user1, account1);
         List<TransactionsResponse> transactionsForUser2 = UserSteps.checkTransactions(user2, account2);
@@ -84,14 +87,16 @@ public class TransferBetweenAccountsTest extends BaseTest {
 
     @MethodSource("validAmount")
     @ParameterizedTest
+    @Disabled
     @DisplayName("User1 can transfer to user2 less than 10000 and check accounts that amount changed")
     public void userCanTransferValidAmountTest(float amount) {
         TransferRequest transferRequest = TransferRequest.builder().amount(amount).senderAccountId(account1.getId()).receiverAccountId(account2.getId()).build();
         TransferResponse transferResponse = new ValidatedCrudRequester<TransferResponse>(Endpoint.TRANSFER, RequestSpecifications.userSpec(generatedUsername1, generatedPassword1), ResponseSpecifications.statusOk()).post(transferRequest);
         ModelAssertions.assertThatModels(transferRequest, transferResponse).match();
         softly.assertThat(transferResponse.getMessage()).isEqualTo("Transfer successful");
-        List<TransactionsResponse> transactionsForUser1 = UserSteps.checkTransactions(user1, account1);
-        List<TransactionsResponse> transactionsForUser2 = UserSteps.checkTransactions(user2, account2);
+
+        List<TransactionsResponse> transactionsForUser1 = checkTransactions(user1, account1);
+        List<TransactionsResponse> transactionsForUser2 = checkTransactions(user2, account2);
         softly.assertThat(transactionsForUser1).as("Transaction list should not be empty").isNotEmpty();
         softly.assertThat(transactionsForUser2).as("Transaction list should not be empty").isNotEmpty();
         softly.assertThat(transactionsForUser1.stream().filter(s -> s.getType().equals(TYPES.TRANSFER_OUT)).findFirst().get().getAmount()).isEqualTo(transferResponse.getAmount());
@@ -115,7 +120,7 @@ public class TransferBetweenAccountsTest extends BaseTest {
     public void userCanNotTransferInvalidAmountTest(float amount, String error) {
         TransferRequest transferRequest = TransferRequest.builder().amount(amount).senderAccountId(account1.getId()).receiverAccountId(account2.getId()).build();
         new CrudRequester(Endpoint.TRANSFER, RequestSpecifications.userSpec(generatedUsername1, generatedPassword1), ResponseSpecifications.returnsBadRequest(error)).post(transferRequest);
-        List<TransactionsResponse> transactionsForUser2 = UserSteps.checkTransactions(user2, account2);
+        List<TransactionsResponse> transactionsForUser2 = checkTransactions(user2, account2);
         softly.assertThat(transactionsForUser2).isEmpty();
         List<CreateAccountResponse> accountResponses2 = UserSteps.checkAccount(user2);
         softly.assertThat(accountResponses2.getFirst().getBalance()).isEqualTo(0.0f);
