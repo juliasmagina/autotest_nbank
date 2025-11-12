@@ -17,7 +17,50 @@ jobs:
           distribution: 'corretto'
           java-version: '21'
 
-
+      - name: Wait for backend application to be ready
+        run: |
+          echo "Waiting for Spring Boot application inside backend container to start..."
+          
+          # Ждем пока в логах бэкенда появится сообщение о успешном запуске Spring Boot
+          timeout 180s bash -c '
+            cd infrastructure/docker-compose/
+            until docker compose logs backend | grep -q "Started.*Application\|Started.*in.*seconds"; do
+              echo "Spring Boot still starting inside container..."
+              sleep 10
+            done
+            cd ../..
+          '
+          echo "✅ Spring Boot application started inside container!"
+          
+          # Дополнительная проверка что приложение действительно принимает запросы
+          echo "Testing application endpoints..."
+          for i in {1..10}; do
+            if curl -f -s http://localhost:4111/health > /dev/null; then
+              echo "✅ Health endpoint is responding!"
+              break
+            elif curl -f -s http://localhost:4111/actuator/health > /dev/null; then
+              echo "✅ Actuator health endpoint is responding!"
+              break
+            elif curl -s -o /dev/null -w "%{http_code}" http://localhost:4111/ | grep -q "200\|401\|403"; then
+              echo "✅ Application is responding to requests!"
+              break
+            else
+              echo "Attempt $i/10 - Application not ready yet..."
+              sleep 5
+            fi
+          done
+          
+          # Финальная проверка
+          if curl -f http://localhost:4111/health; then
+            echo "🎉 Backend is fully ready for tests!"
+          else
+            echo "❌ Backend health check failed"
+            cd infrastructure/docker-compose/
+            echo "=== Recent backend logs ==="
+            docker compose logs backend --tail=50
+            cd ../..
+            exit 1
+          fi
 
 
       - name: Cache Maven repository
