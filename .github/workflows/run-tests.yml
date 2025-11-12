@@ -17,15 +17,6 @@ jobs:
           distribution: 'corretto'
           java-version: '21'
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Install Docker Compose
-        run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version   
-
       - name: Cache Maven repository
         uses: actions/cache@v4
         with:
@@ -37,34 +28,6 @@ jobs:
       - name: Set up services
         run: cd infrastructure/docker-compose/ && bash restart-docker.sh && cd ../..
 
-      - name: Wait for services to be ready
-        run: |
-          echo "Waiting for backend to be ready..."
-
-          # Даем больше времени на запуск Spring Boot
-          sleep 30
-
-          # Пробуем разные эндпоинты health check
-          for i in {1..30}; do
-            if curl -f http://localhost:4111/health 2>/dev/null; then
-              echo "Health check passed!"
-              break
-            elif curl -f http://localhost:4111/actuator/health 2>/dev/null; then
-              echo "Actuator health check passed!"
-              break
-            elif curl -f http://localhost:4111/ 2>/dev/null; then
-              echo "Root endpoint responded!"
-              break
-            else
-              echo "Attempt $i/30 - application not ready, waiting 10 seconds..."
-              sleep 10
-            fi
-          done
-
-          # Если все еще не готово, покажем логи для диагностики
-          cd infrastructure/docker-compose/
-          docker-compose logs backend --tail=50
-          cd ../..
 
       - name: Run tests
         run: ./mvnw clean test -q
