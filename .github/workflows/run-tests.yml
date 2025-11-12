@@ -16,6 +16,22 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: '21'
+          
+      - name: Install Docker on macOS
+        run: |
+          # Устанавливаем Docker Desktop для macOS
+          brew install --cask docker
+          
+          # Запускаем Docker Desktop (может потребовать ручного подтверждения)
+          open -a Docker
+          
+          # Ждем пока Docker запустится
+          echo "Waiting for Docker to start..."
+          sleep 60
+          
+          # Проверяем установку
+          docker --version
+
 
       - name: Cache Maven repository
         uses: actions/cache@v4
