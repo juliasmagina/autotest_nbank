@@ -1,7 +1,6 @@
 services:
   backend:
     image: nobugsme/nbank:with_fraud_check
-    platform: linux/amd64
     ports:
       - "4111:4111"
     networks:
