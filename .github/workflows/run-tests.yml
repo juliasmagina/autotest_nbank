@@ -34,7 +34,7 @@ jobs:
           echo "Waiting for backend to be fully ready..."
           
           # Даем время на запуск контейнеров
-          sleep 30
+          sleep 45
           
           # Ждем пока бэкенд станет доступен
           echo "Checking backend availability..."
@@ -52,9 +52,9 @@ jobs:
               echo "Attempt $i/20 - Backend not ready yet..."
               if [ $i -eq 20 ]; then
                 echo "❌ Backend failed to start"
-                # Покажем логи для диагностики
+                # Покажем логи для диагностики (используем новый синтаксис)
                 cd infrastructure/docker-compose
-                docker-compose logs backend
+                docker compose logs backend
                 cd ../..
                 exit 1
               fi
