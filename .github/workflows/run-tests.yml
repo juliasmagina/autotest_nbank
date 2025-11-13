@@ -29,41 +29,6 @@ jobs:
       - name: Set up services
         run: cd infrastructure/docker-compose && bash restart-docker.sh && cd ../..
 
-      - name: Wait for backend to be ready
-        run: |
-          echo "Waiting for backend to be fully ready..."
-          
-          # Даем время на запуск контейнеров
-          sleep 45
-          
-          # Ждем пока бэкенд станет доступен
-          echo "Checking backend availability..."
-          for i in {1..20}; do
-            if curl -f -s http://localhost:4111/health > /dev/null; then
-              echo "✅ Backend health check passed!"
-              break
-            elif curl -f -s http://localhost:4111/actuator/health > /dev/null; then
-              echo "✅ Actuator health check passed!"
-              break
-            elif curl -s http://localhost:4111/ > /dev/null; then
-              echo "✅ Backend is responding!"
-              break
-            else
-              echo "Attempt $i/20 - Backend not ready yet..."
-              if [ $i -eq 20 ]; then
-                echo "❌ Backend failed to start"
-                # Покажем логи для диагностики (используем новый синтаксис)
-                cd infrastructure/docker-compose
-                docker compose logs backend
-                cd ../..
-                exit 1
-              fi
-              sleep 10
-            fi
-          done
-          
-          echo "🎉 Backend is ready for tests!"
-
       - name: Run tests
         run: ./mvnw clean test -q
         env:
